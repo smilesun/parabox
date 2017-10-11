@@ -7,38 +7,23 @@
 #' @return [\code{\link{ParamHandle}}].
 #' @family ParamHelpers
 ParamHandle = R6Class("ParamHandle",
-  inherit = ParamBase, # FIXME: Are we sure? Yes!
+  inherit = ParamBase,
   public = list(
 
     # member variables
-    id = NULL,
-    val = NULL,  # for devolepment
-    node = NULL,
-    root = NULL,
-    parent = NULL,
-    depend = NULL,  # gamma param is valid only when kernel = "RBF"
-    reldepth = 0,  # this arg has to be updated when parent changed!
-    flatval = NULL,
-    mand.children = NULL,
-    cond.children = NULL,
-    require.varpar = NULL,
-    visitor = NULL,
+    node = NULL, # reference to the ParamNode this handle belongs to
+    root = NULL, # reference to the root ParamNode
+    parent = NULL, # reference to the parent ParamNode
+    condition = NULL, # quoted expression that has to evaluate for TRUE on the parent node to make this Node active.
+    children = NULL, #  list of references to the children ParamNodes
 
     # constructor
-    initialize = function(id = NULL, val = NULL, node = NULL, parent = NULL, depend = NULL, require.exp = NULL) {
-      self$id = id
+    initialize = function(node = NULL, root = NULL, parent = NULL, condition = NULL, children = NULL) {
       self$node = node
-      self$val = val
+      self$root = root
       self$parent = parent
-      self$depend = depend
-      self$reldepth = ifelse(is.null(parent), 0, (parent$reldepth + 1))
-      self$mand.children = new.env()
-      self$cond.children = new.env()
-      self$require.varpar = function(x) {
-        if(is.null(self$depend)) return(TRUE)
-          return(x$val == self$depend$val)
-      }
-      self$visitor = ParamVisitor$new(self)
+      self$condition = condition
+      self$children = children
     },
 
     # public methods
