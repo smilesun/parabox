@@ -21,11 +21,11 @@ test_that("test if ParamTree sample works", {
 test_that("simple construction works", {
   # that is how i would like it to work
 
-  # ParamSetFlat can only be leaf
-  # A ParamTree consists of multiple Params and children
-  # Params can not have Children
+  # ParamSetFlat can only be terminal leaf
+  # A ParamTree consists of multiple ParamSimple and children
+  # ParamSimple can not have Children
   # Only ParamTree can have children
-  # A child of a ParamTree can be a Param/ParamSetTree/ParamSetFlat(only leaf)
+  # A child of a ParamTree can be a ParamSimple/ParamSetTree/ParamSetFlat(only terminal-leaf)
   # Children are conditional on all Parameters of the Parent Tree
   #
   # ParVals for trees are stored as list
@@ -44,7 +44,7 @@ test_that("simple construction works", {
     ps$addChild(ps.b, condition = quote(method == "b"))
 
     pv = list(
-      list(
+      treeParam = list(
         method = "b", 
         b.treeParam = list(
           b.int.1 = 4,
