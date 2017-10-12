@@ -31,7 +31,13 @@ ParamSetTree = R6Class("ParamSetTree",
 
     # public methods
     sample = function() {
-      self$handle$sample()
+
+    }
+
+    addChild = function(param, condition) {
+      param$handle$condition = condition #FIXME: is that redundant?
+      param$handle$parent = self
+      self$handle$addChild(param, condition)
     }
   ),
   private = list(

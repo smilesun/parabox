@@ -18,7 +18,7 @@ ParamHandle = R6Class("ParamHandle",
     children = NULL, #  list of references to the children ParamNodes
 
     # constructor
-    initialize = function(node = NULL, root = NULL, parent = NULL, condition = NULL, children = NULL) {
+    initialize = function(node = NULL, root = NULL, parent = NULL, condition = NULL, children = list()) {
       self$node = node
       self$root = root
       self$parent = parent
@@ -26,30 +26,8 @@ ParamHandle = R6Class("ParamHandle",
       self$children = children
     },
 
-    # public methods
-    isdependMet = function() {  # return wether the parent took the defined value
-      if(is.null(self$depend)) return(TRUE)
-      if(is.null(self$parent)) return(TRUE)
-      if(is.null(self$parent$val)) return(FALSE)
-      #if(is.null(self$parent$val)) stop("parent has no value!")
-      if(is.null(self$depend$val)) stop("ill defined dependency")
-      return(self$parent$val == self$depend$val)
-    },
-
-    addMandChild = function(cnodehandle) {
-      cnodehandle$setParent(self)
-      assign(cnodehandle$id, cnodehandle, self$mand.children)
-      self$flatval$mand = names(self$mand.children)
-      return(cnodehandle)
-    },
-    addCondChild = function(cnodehandle) {  # rbf kernal params
-      cnodehandle$setParent(self)
-      assign(cnodehandle$id, cnodehandle, self$cond.children)
-      self$flatval$cond = names(self$cond.children)
-      return(cnodehandle)
-    },
-    addChildren = function(flatnodes) {
-
+    addChild = function(param, condition) {
+      self$children = c(self$children, list(list(param = param, condition = condition)))
     },
     setParent = function(pnode) {
       self$parent = pnode
