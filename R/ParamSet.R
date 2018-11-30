@@ -66,7 +66,7 @@ ParamSet = R6Class(
     # member variables
 
     # constructor
-    initialize = function(id = "parset", handle = NULL, params = list(), dictionary = NULL, tags = NULL, restriction = NULL, trafo = NULL) {
+    initialize = function(id = "parset", params = list(), dictionary = NULL, tags = NULL, restriction = NULL, trafo = NULL) {
       # check function that checks the whole param set by simply iterating
       check = function(x, na.ok = FALSE, null.ok = FALSE) {
         assert_set_equal(names(x), self$ids)

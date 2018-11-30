@@ -55,7 +55,6 @@ OptPath = R6Class(
     initialize = function(param_set, y_names = "y", minimize = TRUE, check_feasible = TRUE) {
       private$.data = data.table(
         dob = integer(0L),
-        message = character(0L),
         error = character(0L),
         exec_time = double(0L),
         timestamp = Sys.time()[FALSE],
@@ -81,7 +80,7 @@ OptPath = R6Class(
     },
 
     # public methods
-    add = function(x, y, dob = NULL, message = NA_character_, error = NA_character_, exec_time = NA_real_, timestamp = Sys.time(), extra = NULL, transformed_x = NULL) {
+    add = function(x, y, dob = NULL, error = NA_character_, exec_time = NA_real_, timestamp = Sys.time(), extra = NULL) {
 
       # convenience: handle y
       if (!test_list(y)) {
@@ -94,11 +93,6 @@ OptPath = R6Class(
       # convenience: handle x
       if (!test_list(x)) {
         x = as.list(x)
-      }
-
-      # handle transformed_x
-      if (!is.null(self$param_set$trafo) && is.null(transformed_x)) {
-        transformed_x = self$param_set$transform(x)
       }
 
       assert_list(x, names = "strict")
@@ -116,7 +110,7 @@ OptPath = R6Class(
 
       if (private$cache_pos == length(private$cache)) private$flush()
       private$cache_pos = private$cache_pos + 1L
-      private$cache[[private$cache_pos]] = c(list(dob = dob %??% self$length, message = message, error = error, exec_time = exec_time, timestamp = timestamp, extra = list(extra), transformed_x = list(transformed_x)), x, y)
+      private$cache[[private$cache_pos]] = c(list(dob = dob %??% self$length, error = error, exec_time = exec_time, timestamp = timestamp, extra = list(extra)), x, y)
       invisible(self)
     }
   ),

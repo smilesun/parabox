@@ -44,7 +44,7 @@ ParamNode = R6Class("ParamNode",
     tags = NULL, # additional properties like "on_train", "on_test" or "tunable" for mlr
 
     # constructor
-    initialize = function(id, storage_type, check, handle = NULL, tags) {
+    initialize = function(id, storage_type, check, tags) {
       handle = handle %??% ParamHandle$new()
       assert_string(id)
       self$id = assert_names(id, type = "strict")

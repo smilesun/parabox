@@ -3,14 +3,14 @@
 #'
 #' @description
 #' A \code{\link[R6]{R6Class}} to represent set of parameters.
-#' 
+#'
 #' @section Member Variables:
-#' 
+#'
 #' \describe{
 #'   \item{params}{[\code{list}] \cr
 #'   List of the Params}
 #'   \item{trafo}{[\code{function(x, dict, tags)}] \cr
-#'     A function that returns a list of transformed x values. 
+#'     A function that returns a list of transformed x values.
 #'     Has to work vectorized and also return untransformed x values.
 #'     The function takes a list \code{x} of all parameter values, additionally the dictionary linked to the \code{ParamSet}.
 #'     \code{tags} is a named list that contains the tags for each Param in \code{x}.}
@@ -19,23 +19,23 @@
 #'     It has to be evaluated to \code{TRUE} so that the parameter value is valid.
 #'     The expression has to work on vectors of values.}
 #' }
-#' 
+#'
 #' Inherited from \code{ParamNode}:
 #' @inheritSection ParamNode Member Variables
 #'
 #' @section Methods:
 #'   \emph{none}
-#' 
+#'
 #' Inherited from \code{ParamNode}:
 #' @inheritSection ParamNode Methods
-#' 
+#'
 #' @section Active Bindings:
-#' 
+#'
 #' \describe{
 #'   \item{dictionary}{[\code{list|environment}] \cr
 #'     A dictionary that additional values that might be important for the transformation function, like \code{n} for the number of observations.}
 #' }
-#' 
+#'
 #' Inherited from \code{ParamNode}
 #' @inheritSection ParamNode Active Bindings
 #'
@@ -44,15 +44,15 @@
 ParamSetBase = R6Class("ParamSetBase",
   inherit = ParamNode,
   public = list(
-   
+
     # member variables
     params = NULL,  # a list of ParamNodes
     trafo = NULL, # function to transform the value before evaluation
     restriction = NULL, # quote that states if certain conditions have to be met
-    
+
     # constructor
-    initialize = function(id = "parset", storage_type, check, handle = NULL, params, dictionary, tags, restriction, trafo) {
-      
+    initialize = function(id = "parset", storage_type, check, params, dictionary, tags, restriction, trafo) {
+
       # construct super class
       super$initialize(id = id, storage_type = storage_type, check = check, handle = handle, tags = tags)
 
@@ -81,7 +81,7 @@ ParamSetBase = R6Class("ParamSetBase",
         return(private$priv_dictionary)
       } else if (!is.null(x)) {
         x = as.environment(x)
-        private$priv_dictionary = x   
+        private$priv_dictionary = x
       }
     }
   ),
