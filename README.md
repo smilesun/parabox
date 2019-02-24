@@ -18,6 +18,8 @@ devtools::install_github("mlr-org/phng", dependencies = TRUE)
 
 Usage
 -----
+see here for conditional hierarchical hyper-parameter space specification and ancestral sampling
+https://github.com/smilesun/parabox/blob/tree/vignettes/supplementary/tree_structured_paramsets.Rmd
 
 Create a simple ParamSet using all supported Parameter Types:
 
