@@ -1,301 +1,155 @@
+---
+title: "Tree structured ParamSets"
+vignette: >
+  %\VignetteIndexEntry{Tree structured ParamSets}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
-phng
-====
 
-[![Build Status Linux](https://travis-ci.org/mlr-org/phng.svg?branch=master)](https://travis-ci.org/mlr-org/phng) [![Build Status Windows](https://ci.appveyor.com/api/projects/status/m26qhpq99cka8l1b?svg=true)](https://ci.appveyor.com/project/jakob-r/phng) [![Coverage Status](https://coveralls.io/repos/github/mlr-org/phng/badge.svg?branch=master)](https://coveralls.io/github/mlr-org/phng?branch=master)
 
-Universal Parameter Space Description and Tools
+# ParamSetTree 
 
--   [Issues and Bugs](https://github.com/mlr-org/phng/issues)
--   [Documentation](https://mlr-org.github.io/phng)
+## Setup
+Install the Tree branch
 
-Installation
-------------
 
-``` r
-devtools::install_github("mlr-org/phng", dependencies = TRUE)
+```r
+devtools::install_github("smilesun/parabox", ref = "tree")
 ```
 
-Usage
------
-see here for conditional hierarchical hyper-parameter space specification and ancestral sampling
-https://github.com/smilesun/parabox/blob/tree/vignettes/supplementary/tree_structured_paramsets.Rmd
+This tutorial will guide you how to set up conditional hyperparameters for SVM and Random Forest, setting up Machine Learning Pipeline and Deep Learning Architecture 
 
-Create a simple ParamSet using all supported Parameter Types:
+## Support Vector Machine/Random Forest Model Multiplexer Hyper-parameter Specification
+Some hyper-parameters could depend on other hyper-parameters. For example, if we have a model multiplexer of Support Vector Machine(SVM) and Random Forest(RF). The hyper-parameter "kernel" only makes sense if the chosen model is "SVM". Moreover, the hyper-parameter of "gamma" only makes sense if the chosen kernel for "SVM" is "rbf". This kind of relationship resembles a tree or directed graph structure where a node is only activated when its corresponding parent node is activated. 
 
--   \_Int\_egers
--   *Real*-valued numbers
--   *Flag* for `TRUE`/`FALSE`
--   *Categorical* values, namely characters.
--   Further types are only possible by using transformations.
+To tackle the above mentioned problem, we have the following code. Each separate hyper-parameter has a unique identifier called "id" which is defined inside the ParamSimple(ParamCategorical, ParamReal, ..etc). These "id"s are extracted from ParamSimple and used as the unique identifier as the node in the tree as well.
 
-``` r
-ps = ParamSetFlat$new(
-  params = list(
-    ParamInt$new(id = "z", lower = 1, upper = 3),
-    ParamReal$new(id = "x", lower = -10, upper = 10),
-    ParamFlag$new(id = "switch"),
-    ParamCategorical$new(id = "methods", values = c("a","b","c"))
-  )
+
+```r
+library(phng)
+pst = ParamSetTree$new("test",
+  ParamCategorical$new(id = "model", values = c("SVM", "RF")),
+  addDep(
+    ParamReal$new(id = "C", lower = 0, upper = 100), 
+    did = "model", expr = quote(model == "SVM")), # did here means dependant id
+  addDep(
+    ParamCategorical$new(id = "kernel", values = c("rbf", "poly")), 
+    did = "model", expr = quote(model == "SVM")),
+  addDep(
+    ParamReal$new(id = "gamma", lower = 0, upper = 101), 
+    did = "kernel", expr = quote(kernel == "rbf")),
+  addDep(
+    ParamInt$new(id = "n", lower = 1L, upper = 10L), 
+    did = "kernel", expr = quote(kernel == "poly")),
+  addDep(
+    ParamInt$new(id = "n_tree", lower = 1L, upper = 10L), 
+    did = "model", expr = quote(model == "RF"))
 )
+pst$sample(1L)
+##    model        C n_tree kernel  n    gamma
+## 1:   SVM 78.83051     NA    rbf NA 89.18476
+pst$sample(10L)
+##     model        C n_tree kernel  n    gamma
+##  1:    RF       NA      1   <NA> NA       NA
+##  2:    RF       NA      9   <NA> NA       NA
+##  3:    RF       NA      5   <NA> NA       NA
+##  4:    RF       NA      5   <NA> NA       NA
+##  5:    RF       NA      6   <NA> NA       NA
+##  6:   SVM 89.98250     NA    rbf NA 4.248013
+##  7:   SVM 95.45036     NA   poly  7       NA
+##  8:    RF       NA     10   <NA> NA       NA
+##  9:    RF       NA      8   <NA> NA       NA
+## 10:    RF       NA      6   <NA> NA       NA
 ```
 
-Draw random samples / create random design:
 
-``` r
-ps$sample(3)
-```
+## Machine learning pipeline specification 
 
-    ##    z         x switch methods
-    ## 1: 1  7.660348  FALSE       b
-    ## 2: 3  8.809346  FALSE       c
-    ## 3: 2 -9.088870  FALSE       b
-
-Generate LHS Design:
-
-``` r
-ps$generateLHSDesign(3)
-```
-
-    ##    z          x switch methods
-    ## 1: 1  0.4842227  FALSE       a
-    ## 2: 3 -9.7196031   TRUE       c
-    ## 3: 2  7.9520227  FALSE       b
-
-Generate Grid Design:
-
-``` r
-ps$generateGridDesign(resolution = 2)
-```
-
-    ##     z   x switch methods
-    ##  1: 1 -10  FALSE       a
-    ##  2: 1 -10  FALSE       c
-    ##  3: 1 -10   TRUE       a
-    ##  4: 1 -10   TRUE       c
-    ##  5: 1  10  FALSE       a
-    ##  6: 1  10  FALSE       c
-    ##  7: 1  10   TRUE       a
-    ##  8: 1  10   TRUE       c
-    ##  9: 3 -10  FALSE       a
-    ## 10: 3 -10  FALSE       c
-    ## 11: 3 -10   TRUE       a
-    ## 12: 3 -10   TRUE       c
-    ## 13: 3  10  FALSE       a
-    ## 14: 3  10  FALSE       c
-    ## 15: 3  10   TRUE       a
-    ## 16: 3  10   TRUE       c
-
-Properties of the parameters within the ParamSet:
-
-``` r
-ps$values
-```
-
-    ## $z
-    ## [1] 1 2 3
-    ## 
-    ## $x
-    ## NULL
-    ## 
-    ## $switch
-    ## [1]  TRUE FALSE
-    ## 
-    ## $methods
-    ## [1] "a" "b" "c"
-
-``` r
-ps$param.classes
-```
-
-    ##                  z                  x             switch 
-    ##         "ParamInt"        "ParamReal"        "ParamFlag" 
-    ##            methods 
-    ## "ParamCategorical"
-
-``` r
-ps$nlevels
-```
-
-    ##       z       x  switch methods 
-    ##       3      NA       2       3
-
-### Numeric ParamSet
-
-Things you can do on an all numeric ParamSet:
-
-``` r
-ps = ParamSetFlat$new(
-  params = c(
-    list(ParamInt$new(id = "z", lower = -10, upper = 10)),
-    repeatParam(2, ParamReal$new(id = "x", lower = 0, upper = 1))
-  )
+```r
+pst = ParamSetTree$new("pre",     
+  ParamCategorical$new(id = "preprocessing", values = c("PCA", "FeatureFiltering")),
+  addDep(
+    ParamInt$new(id = "pca.k", lower = 1, upper = 5), 
+    did = "preprocessing", expr = quote(preprocessing == "PCA")),
+ addDep(
+   ParamInt$new(id = "filter.n", lower = 1, upper = 10), 
+   did = "preprocessing", expr = quote(preprocessing == "FeatureFiltering"))
 )
 
-ps$lower
-```
-
-    ##            z x.repeated.1 x.repeated.2 
-    ##          -10            0            0
-
-``` r
-ps$upper
-```
-
-    ##            z x.repeated.1 x.repeated.2 
-    ##           10            1            1
-
-``` r
-ps$range
-```
-
-    ##              id upper lower
-    ## 1:            z    10   -10
-    ## 2: x.repeated.1     1     0
-    ## 3: x.repeated.2     1     0
-
-The usage of `repeatParam` generates tags that indicate to which group the parameters belong to:
-
-``` r
-ps$member.tags
-```
-
-    ## $z
-    ## NULL
-    ## 
-    ## $x.repeated.1
-    ## [1] "x.repeated"
-    ## 
-    ## $x.repeated.2
-    ## [1] "x.repeated"
-
-This becomes useful if you want to do operations on parameters of one group like with transformations.
-
-### Transformations
-
-Transformations are functions with a fixed signature.
-
--   `x` A `data.table` of parameter values. Each column contains a vector of parameter values of a single parameter.
--   `dict` An environment, that can be accessed using the `$` operator. It can contains values that don't belong to any parameter but are important for transformations.
--   `tags` A list of the tags for each parameter. Each parameter can have various tags indicating additional characteristics.
-
-Transformations are useful to scale parameters:
-
-``` r
-ps = ParamSetFlat$new(
-  params = list(
-    ParamInt$new(id = "z", lower = -3, upper = 3),
-    ParamReal$new(id = "x", lower = 0, upper = 1)
-  ),
-  trafo = function(x, dict, tags) {
-    x$z = 2^x$z
-    x$x = round(x$x * dict$p)
-    return(x)
-  }
+pst1 = ParamSetTree$new("ml",
+  ParamCategorical$new(id = "model", values = c("SVM", "RF")),
+  addDep(
+    ParamReal$new(id = "C", lower = 0, upper = 100), 
+    did = "model", expr = quote(model == "SVM")), # did here means dependant id
+  addDep(
+    ParamCategorical$new(id = "kernel", values = c("rbf", "poly")), 
+    did = "model", expr = quote(model == "SVM")),
+  addDep(
+    ParamReal$new(id = "gamma", lower = 0, upper = 101), 
+    did = "kernel", expr = quote(kernel == "rbf")),
+  addDep(
+    ParamInt$new(id = "poly.n", lower = 1L, upper = 10L), 
+    did = "kernel", expr = quote(kernel == "poly")),
+  addDep(
+    ParamInt$new(id = "n_tree", lower = 1L, upper = 10L), 
+    did = "model", expr = quote(model == "RF"))
 )
-(x = ps$sample(3))
+pst$setChild(pst1)
+pst$sample(4L)
+##       preprocessing pca.k filter.n model        C n_tree kernel poly.n
+## 1:              PCA     1       NA    RF       NA     10   <NA>     NA
+## 2: FeatureFiltering    NA        8   SVM 47.77960     NA   poly      3
+## 3:              PCA     2       NA   SVM 41.45463     NA    rbf     NA
+## 4:              PCA     1       NA   SVM 46.59625     NA    rbf     NA
+##       gamma
+## 1:       NA
+## 2:       NA
+## 3: 37.25339
+## 4: 86.64060
 ```
 
-    ##     z         x
-    ## 1: -3 0.3688455
-    ## 2: -1 0.1524447
-    ## 3: -1 0.1388061
+## Neural network architecture specification
+Multiple Layers
 
-The transformation uses the dictionary and will fail if none is supplied:
 
-``` r
-ps$transform(x)
+```r
+ps = ParamSetTreeRe$new("nn", nr = 2,
+  ParamInt$new(id = "layer_dense.units", lower = 2L, upper = 1000L),
+  ParamReal$new(id = "kernel_regularizer", lower = 0, upper = 3.0), 
+  ParamReal$new(id = "bias_regularizer", lower = 0, upper = 3.0), 
+  ParamCategorical$new(id = "reg_type", values = c("regularizer_l1", "regularizer_l2")),
+  ParamCategorical$new(id = "activation_fun", values = c("sigmoid", "tanh", "linear")))
+ps$sample(3L)
+##    L0.bias_regularizer    L0.reg_type L0.layer_dense.units
+## 1:           0.1374935 regularizer_l1                  800
+## 2:           1.3455490 regularizer_l2                  813
+## 3:           0.7308584 regularizer_l2                  419
+##    L0.kernel_regularizer L0.activation_fun L1.bias_regularizer
+## 1:             0.3656978              tanh           0.6195942
+## 2:             2.3830270              tanh           2.2634255
+## 3:             2.3645875           sigmoid           1.3046782
+##       L1.reg_type L1.layer_dense.units L1.kernel_regularizer
+## 1: regularizer_l1                  754            2.68513608
+## 2: regularizer_l2                  711            0.00187432
+## 3: regularizer_l2                  894            2.65940718
+##    L1.activation_fun L2.bias_regularizer    L2.reg_type
+## 1:              tanh           1.9953456 regularizer_l1
+## 2:              tanh           0.6603567 regularizer_l1
+## 3:           sigmoid           0.3920871 regularizer_l2
+##    L2.layer_dense.units L2.kernel_regularizer L2.activation_fun
+## 1:                  385             0.8231509            linear
+## 2:                  614             1.0553937           sigmoid
+## 3:                  345             1.9702744           sigmoid
 ```
 
-    ## Error in `[<-.data.table`(x, j = name, value = value): RHS of assignment to existing column 'x' is zero length but not NULL. If you intend to delete the column use NULL. Otherwise, the RHS must have length > 0; e.g., NA_integer_. If you are trying to change the column type to be an empty list column then, as with all column type changes, provide a full length RHS vector such as vector('list',nrow(DT)); i.e., 'plonk' in the new column.
 
-The dictionary can always be changed:
-
-``` r
-ps$dictionary = list(p = 10)
-ps$transform(x)
+```r
+library(keras)
+ps$sample()
+list.par.val = ps$sampleList(flat = FALSE)
+tex = keras_helper(input.shape = 256, output.shape = 10L, 
+  output.act = "softmax", loss = "mse", 
+  lr = 0.0025, list.par.val = list.par.val)
+eval(parse(text = tex))
 ```
-
-    ##        z x
-    ## 1: 0.125 4
-    ## 2: 0.500 2
-    ## 3: 0.500 1
-
-``` r
-ps$dictionary = list(p = 1000)
-ps$transform(x)
-```
-
-    ##        z   x
-    ## 1: 0.125 369
-    ## 2: 0.500 152
-    ## 3: 0.500 139
-
-### Advanced Transformations
-
-The following creates a ParamSet with a transformation that scales the `x` values and returns them as a vector. The original parameters will be removed from the trafo result. Keep in mind that `z` stays untouched and remains after the transformation.
-
-``` r
-ps = ParamSetFlat$new(
-  params = c(
-    list(ParamInt$new(id = "z", lower = -10, upper = 10)),
-    repeatParam(2, ParamReal$new(id = "x", lower = 0, upper = 1))
-  ),
-  trafo = function(x, dict, tags) {
-    scale = function(x1, x2) c(x1, x2) / sqrt(x1^2+x2^2) 
-    x$x = Map(scale, x$x.repeated.1, x$x.repeated.2)
-    x$x.repeated.1 = NULL
-    x$x.repeated.2 = NULL
-    return(x)
-  }
-)
-```
-
-The output of all value generating functions won't change for a ParamSet that has a `trafo` function. Instead these outputs can be put into `ps$transform()` to obtain the desired parameter values.
-
-``` r
-x = ps$generateLHSDesign(3)
-ps$transform(x)
-```
-
-    ##     z                     x
-    ## 1: -2   0.9839367,0.1785177
-    ## 2: 10   0.8173283,0.5761722
-    ## 3: -5 0.04754544,0.99886908
-
-For more advanced transformations on repeated parameters you can use `trafoOnRepeatedParam()`:
-
-``` r
-ps = ParamSetFlat$new(
-  params = c(
-    list(
-      ParamFlag$new(id = "switch"),
-      ParamInt$new(id = "z", lower = 1, upper = 4)),
-    repeatParam(4, ParamReal$new(id = "x", lower = 0, upper = 1))
-  ),
-  trafo = trafoOnRepeatedParam(
-    fun = function(x, dict, tags) {
-      scale = function(z, ...) {
-        x = c(...)[1:z]
-        x / sum(x)
-      }
-      res = do.call(Map, c(list(f = scale, z = dict$z), as.list(x)))
-      list(x = res)
-    }, repeated.param.id = "x", additional.params = "z")
-  )
-(x = ps$sample(3))
-```
-
-    ##    switch z x.repeated.1 x.repeated.2 x.repeated.3 x.repeated.4
-    ## 1:  FALSE 4 0.0006247733    0.3798165    0.1111354    0.4176468
-    ## 2:  FALSE 3 0.4753165741    0.6127710    0.2436195    0.7881958
-    ## 3:   TRUE 3 0.2201188852    0.3517979    0.6680556    0.1028646
-
-``` r
-ps$transform(x)
-```
-
-    ##    switch                                                   x
-    ## 1:  FALSE 0.0006871504,0.4177372576,0.1222311373,0.4593444546
-    ## 2:  FALSE                       0.3569228,0.4601395,0.1829377
-    ## 3:   TRUE                       0.1775192,0.2837143,0.5387665

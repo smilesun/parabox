@@ -1,4 +1,4 @@
-Package: phng
+Package: parabox
 Type: Package
 Title: Define Parameter Spaces, Generate Designs and Check Feasibilities
 Version: 0.1
@@ -29,5 +29,5 @@ Suggests:
     testthat,
     roxygen2,
     plyr
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 VignetteBuilder: knitr
